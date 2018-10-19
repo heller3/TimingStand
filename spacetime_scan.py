@@ -10,7 +10,7 @@ import glob
 from other_func import set_env
 from labview_tools import wait_for_file, motor_pos, run_num, scan_num
 from TCP_com import init_ots, config_ots, start_ots, stop_ots
-from database_util import write_runfile, write_scanfile, process_runs, analysis_plot
+from database_util import run_exists,write_runfile, write_scanfile, process_runs, analysis_plot
 
 
  
@@ -61,7 +61,7 @@ time.sleep(40) #remove this later
 scan_number = scan_num() #Reading scan number
 print 'Scan number: ', scan_number
 run_number = run_num() + 1 #Reading run number (increment from where we left off) 
-start_run_number = run_number
+
 #Increment scan number in the text file
 scan_write = open("/home/daq/Data/ScanRegistry/scan_number.txt", "w")
 scan_write.write(str(scan_number + 1))
@@ -74,6 +74,7 @@ else:
  print 'Run Number Does Not Match'
  run_number = max([int(x.split("/media/network/a/LABVIEW PROGRAMS AND TEXT FILES/time_")[1].split(".txt")[0]) for x in glob.glob("/media/network/a/LABVIEW PROGRAMS AND TEXT FILES/time_*")]) + 1
 
+start_run_number = run_number
 
 #SCAN IF LOOP
 if scan_in == 'x' or scan_in == 'y':
@@ -84,14 +85,23 @@ if scan_in == 'x' or scan_in == 'y':
             print 'Motor moved to : ', motor_pos()
             motor_pos_init = motor_pos()
             #time.sleep(10)
-            start_ots(run_number) #start ots-daq
             print 'Run Number: ',run_number
+            if(run_exists(run_number)): 
+                print "ERROR: this run number already exists. Exiting!"
+                break
+
+            start_ots(run_number) #start ots-daq
+            
             #time.sleep(5)
-            #Writing run files
-            write_runfile(motor_pos(), run_number, scan_number, vors, board_sn, bias_volt, laser_amp, laser_fre, amp_volt, scan_in, scan_stepsize, beam_spotsize, temp)
-            #Written run files
+
             stop_ots()  #stop otsdaq
             #time.sleep(10)
+
+            if run_exists(run_number):
+                write_runfile(motor_pos(), run_number, scan_number, vors, board_sn, bias_volt, laser_amp, laser_fre, amp_volt, scan_in, scan_stepsize, beam_spotsize, temp)
+            else:
+                print "Run %i failed." % run_number
+
             wait_for_file("/media/network/a/LABVIEW PROGRAMS AND TEXT FILES/motor.txt", 0,'Motor is still moving')
  
             #For the end run of the OTS-DAQ 

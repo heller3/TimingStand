@@ -4,7 +4,7 @@ using namespace std;
 
 void combine(TString run_number, int scan_number, int isvme, float motor_pos)
 {
- TString dattorootfile = Form(". /home/daq/TimingDAQ/dattoroot.sh /home/daq/Data/CMSTiming/RawDataSaver0CMSVMETiming_Run%d_0_Raw.dat /home/daq/Data/CMSTiming/RawDataSaver0CMSVMETiming_Run%d_0_Raw.root", run_number, run_number);
+ TString dattorootfile = Form(". /home/daq/TimingDAQ/dattoroot.sh /home/daq/Data/CMSTiming/RawDataSaver0CMSVMETiming_Run%s_0_Raw.dat /home/daq/Data/CMSTiming/RawDataSaver0CMSVMETiming_Run%s_0_Raw.root", run_number.Data(), run_number.Data());
  system(dattorootfile);
  if (isvme == 0)
    {
@@ -173,7 +173,7 @@ void combine(TString run_number, int scan_number, int isvme, float motor_pos)
      ofstream myfile;
      cout<<file1<<endl;
      myfile.open(file1, ios::app);
-     myfile<<motor_pos<<" "<<run_number<<" "<<h1->GetMean()<<" "<<h1->GetMeanError()<<" "<<h2->GetMean()<<" "<<h2->GetMeanError()<<" "<<h3->GetMean()<<" "<<h3->GetMeanError()<<" "<<h4->GetMean()<<" "<<h4->GetMeanError()<<" "<<h5->GetMean()<<" "<<h5->GetMeanError()<<" "<<h6->GetMean()<<" "<<h6->GetMeanError()<<" "<<h7->GetMean()<<" "<<h7->GetMeanError()<<" "<<h8->GetMean()<<" "<<h8->GetMeanError()<<" "<<eff1<<" "<<eff2<<" "<<eff3<<" "<<eff4<<" "<<eff5<<" "<<eff6<<" "<<eff7<<" "<<eff8<<" "<<tr1->GetRMS()<<" "<<tr1->GetRMSError()<<" "<<tr2->GetRMS()<<" "<<tr2->GetRMSError()<<" "<<tr3->GetRMS()<<" "<<tr3->GetRMSError()<<" "<<tr4->GetRMS()<<" "<<tr4->GetRMSError()<<" "<<tr5->GetRMS()<<" "<<tr5->GetRMSError()<<" "<<tr6->GetRMS()<<" "<<tr6->GetRMSError()<<" "<<tr7->GetRMS()<<" "<<tr7->GetRMSError()<<" "<<tr8->GetRMS()<<" "<<tr8->GetRMSError()<<" "<<l1->GetMean()<<" "<<l1->GetMeanError()<<" "<<l2->GetMean()<<" "<<l2->GetMeanError()<<" "<<l3->GetMean()<<" "<<l3->GetMeanError()<<endl;
+     myfile<<run_number<<" "<<motor_pos<<" "<<h1->GetMean()<<" "<<h1->GetMeanError()<<" "<<h2->GetMean()<<" "<<h2->GetMeanError()<<" "<<h3->GetMean()<<" "<<h3->GetMeanError()<<" "<<h4->GetMean()<<" "<<h4->GetMeanError()<<" "<<h5->GetMean()<<" "<<h5->GetMeanError()<<" "<<h6->GetMean()<<" "<<h6->GetMeanError()<<" "<<h7->GetMean()<<" "<<h7->GetMeanError()<<" "<<h8->GetMean()<<" "<<h8->GetMeanError()<<" "<<eff1<<" "<<eff2<<" "<<eff3<<" "<<eff4<<" "<<eff5<<" "<<eff6<<" "<<eff7<<" "<<eff8<<" "<<tr1->GetRMS()<<" "<<tr1->GetRMSError()<<" "<<tr2->GetRMS()<<" "<<tr2->GetRMSError()<<" "<<tr3->GetRMS()<<" "<<tr3->GetRMSError()<<" "<<tr4->GetRMS()<<" "<<tr4->GetRMSError()<<" "<<tr5->GetRMS()<<" "<<tr5->GetRMSError()<<" "<<tr6->GetRMS()<<" "<<tr6->GetRMSError()<<" "<<tr7->GetRMS()<<" "<<tr7->GetRMSError()<<" "<<tr8->GetRMS()<<" "<<tr8->GetRMSError()<<" "<<l1->GetMean()<<" "<<l1->GetMeanError()<<" "<<l2->GetMean()<<" "<<l2->GetMeanError()<<" "<<l3->GetMean()<<" "<<l3->GetMeanError()<<endl;
      myfile.close();
 
      
