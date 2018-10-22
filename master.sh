@@ -13,5 +13,3 @@ then
    python scan_invest.py
 fi
 
-
-
