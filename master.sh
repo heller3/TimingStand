@@ -12,3 +12,4 @@ elif [ $1 = 'summary' ]
 then
    python scan_invest.py
 fi
+
