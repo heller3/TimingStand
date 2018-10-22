@@ -11,5 +11,8 @@ then
 elif [ $1 = 'summary' ]
 then
    python scan_invest.py
+elif [ $1 = 'dattoroot' ]
+then
+   python dattoroot.py
 fi
 

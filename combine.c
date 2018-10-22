@@ -4,8 +4,8 @@ using namespace std;
 
 void combine(TString run_number, int scan_number, int isvme, float motor_pos)
 {
- TString dattorootfile = Form(". /home/daq/TimingDAQ/dattoroot.sh /home/daq/Data/CMSTiming/RawDataSaver0CMSVMETiming_Run%s_0_Raw.dat /home/daq/Data/CMSTiming/RawDataSaver0CMSVMETiming_Run%s_0_Raw.root", run_number.Data(), run_number.Data());
- system(dattorootfile);
+  //TString dattorootfile = Form(". /home/daq/TimingDAQ/dattoroot.sh /home/daq/Data/CMSTiming/RawDataSaver0CMSVMETiming_Run%s_0_Raw.dat /home/daq/Data/CMSTiming/RawDataSaver0CMSVMETiming_Run%s_0_Raw.root", run_number.Data(), run_number.Data());
+  //system(dattorootfile);
  if (isvme == 0)
    {
      TFile f1("~daq/Data/NetScopeTiming/RawDataSaver0NetScope_Run" + run_number + "_0_Raw.root", "UPDATE");

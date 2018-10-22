@@ -9,8 +9,8 @@ import sys
 import glob
 from other_func import set_env
 from labview_tools import wait_for_file, motor_pos, run_num, scan_num
-from TCP_com import init_ots, config_ots, start_ots, stop_ots #inbuilt 5s delay in all of them
-from database_util import run_exists,write_runfile, write_scanfile, process_runs, analysis_plot, get_run_number
+from TCP_com import init_ots, config_ots, start_ots, stop_ots #in-built 5s delay in all of them
+from database_util import run_exists,write_runfile, write_scanfile, process_runs, analysis_plot, get_run_number, append_scanfile, dattoroot
 
 
  
@@ -81,7 +81,7 @@ if scan_in == 'x' or scan_in == 'y':
             motor_pos_init = motor_pos()
             #time.sleep(10)
             print 'Run Number: ', run_number
-            if(run_exists(run_number)): 
+            if(run_exists(run_number, vors)): 
                 print "ERROR: this run number already exists. Exiting!"
                 break
 
@@ -91,7 +91,7 @@ if scan_in == 'x' or scan_in == 'y':
             #time.sleep(10)
             
             #Writing run files
-            if run_exists(run_number):
+            if run_exists(run_number, vors):
                 write_runfile(motor_pos(), run_number, scan_number, vors, board_sn, bias_volt, laser_amp, laser_fre, amp_volt, scan_in, scan_stepsize, beam_spotsize, temp)
             else:
                 print "Run %i failed." % run_number
@@ -105,20 +105,21 @@ if scan_in == 'x' or scan_in == 'y':
                  print 'Motor moved to : ', motor_pos()
                  run_number = run_number + 1
                  time.sleep(20)
-                 start_ots(run_number) #start ots-daq
                  print 'Run Number: ',run_number
                  print 'RUNNING OTSDAQ FOR THE LAST TIME'
+
+                 start_ots(run_number) #start ots-daq
                  #time.sleep(5)
+                 stop_ots()  #stop otsdaq                 
 
                  #Writing run files
-                 if run_exists(run_number):
+                 if run_exists(run_number, vors):
                     write_runfile(motor_pos(), run_number, scan_number, vors, board_sn, bias_volt, laser_amp, laser_fre, amp_volt, scan_in, scan_stepsize, beam_spotsize, temp)
                  else:
                     print "Run %i failed." % run_number
 
-                 stop_ots()  #stop otsdaq                 
             run_number = run_number + 1    
-            #Writing scan file    
+
         write_scanfile(start_run_number, run_number - 1, scan_number, motor_pos_init, motor_pos(), vors, board_sn, bias_volt, laser_amp, laser_fre, amp_volt, scan_in, scan_stepsize, beam_spotsize, temp)
         motor_con.close()
 
@@ -152,8 +153,19 @@ print 'Start run number: ', start_run_number
 print 'Stop run number: ', run_number - 1
 print 'Total runs taken: ',  run_number - start_run_number 
 
+for i in range(start_run_number, run_number):
+   if run_registry_exists(i):
+   else:
+      print 'No run file found for run number: ', i  
+      print 'Appending scan file to include this run number', append_scanfile(i, scan_number)
+
+#DATTOROOT
+dattoroot(scan_number)
+
 #PROCESS RUNS
 process_runs(scan_number)
 
 #PLOT DATA
 analysis_plot(scan_number)
+
+
