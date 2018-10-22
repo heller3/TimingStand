@@ -21,6 +21,9 @@ def run_registry_exists(run_number):
     print rawPath
     return os.path.exists(rawPath)
 
+def get_run_number():
+    run_number = max(max([int(x.split("/media/network/a/LABVIEW PROGRAMS AND TEXT FILES/time_")[1].split(".txt")[0]) for x in glob.glob("/media/network/a/LABVIEW PROGRAMS AND TEXT FILES/time_*")]), max([int(x.split("/home/daq/Data/RunRegistry/run")[1].split(".txt")[0]) for x in glob.glob("/home/daq/Data/RunRegistry/run*")]))
+    return run_number
 
 def write_runfile(a, run_number, scan_number, vors, board_sn, bias_volt, laser_amp, laser_fre, amp_volt, scan_in, scan_stepsize, beam_spotsize, temp):
     runfile_handle = open("/home/daq/Data/RunRegistry/run%d.txt" % run_number, "a+") 

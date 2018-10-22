@@ -9,8 +9,8 @@ import sys
 import glob
 from other_func import set_env
 from labview_tools import wait_for_file, motor_pos, run_num, scan_num
-from TCP_com import init_ots, config_ots, start_ots, stop_ots
-from database_util import run_exists,write_runfile, write_scanfile, process_runs, analysis_plot
+from TCP_com import init_ots, config_ots, start_ots, stop_ots #inbuilt 5s delay in all of them
+from database_util import run_exists,write_runfile, write_scanfile, process_runs, analysis_plot, get_run_number
 
 
  
@@ -60,20 +60,15 @@ time.sleep(40) #remove this later
 
 scan_number = scan_num() #Reading scan number
 print 'Scan number: ', scan_number
-run_number = run_num() + 1 #Reading run number (increment from where we left off) 
+#run_number = run_num() + 1 #Reading run number (increment from where we left off) 
 
 #Increment scan number in the text file
 scan_write = open("/home/daq/Data/ScanRegistry/scan_number.txt", "w")
 scan_write.write(str(scan_number + 1))
 scan_write.close()
 
-#Finding the highest run number in the directory
-if max([int(x.split("/media/network/a/LABVIEW PROGRAMS AND TEXT FILES/time_")[1].split(".txt")[0]) for x in glob.glob("/media/network/a/LABVIEW PROGRAMS AND TEXT FILES/time_*")]) + 1 == run_number:
- print 'Run Number Matches'
-else:
- print 'Run Number Does Not Match'
- run_number = max([int(x.split("/media/network/a/LABVIEW PROGRAMS AND TEXT FILES/time_")[1].split(".txt")[0]) for x in glob.glob("/media/network/a/LABVIEW PROGRAMS AND TEXT FILES/time_*")]) + 1
-
+#Run Number 
+run_number = get_run_number() + 1
 start_run_number = run_number
 
 #SCAN IF LOOP
@@ -85,18 +80,17 @@ if scan_in == 'x' or scan_in == 'y':
             print 'Motor moved to : ', motor_pos()
             motor_pos_init = motor_pos()
             #time.sleep(10)
-            print 'Run Number: ',run_number
+            print 'Run Number: ', run_number
             if(run_exists(run_number)): 
                 print "ERROR: this run number already exists. Exiting!"
                 break
 
             start_ots(run_number) #start ots-daq
-            
             #time.sleep(5)
-
             stop_ots()  #stop otsdaq
             #time.sleep(10)
-
+            
+            #Writing run files
             if run_exists(run_number):
                 write_runfile(motor_pos(), run_number, scan_number, vors, board_sn, bias_volt, laser_amp, laser_fre, amp_volt, scan_in, scan_stepsize, beam_spotsize, temp)
             else:
@@ -115,9 +109,13 @@ if scan_in == 'x' or scan_in == 'y':
                  print 'Run Number: ',run_number
                  print 'RUNNING OTSDAQ FOR THE LAST TIME'
                  #time.sleep(5)
+
                  #Writing run files
-                 write_runfile(motor_pos(), run_number, scan_number, vors, board_sn, bias_volt, laser_amp, laser_fre, amp_volt, scan_in, scan_stepsize, beam_spotsize, temp)
-                 #Written run files
+                 if run_exists(run_number):
+                    write_runfile(motor_pos(), run_number, scan_number, vors, board_sn, bias_volt, laser_amp, laser_fre, amp_volt, scan_in, scan_stepsize, beam_spotsize, temp)
+                 else:
+                    print "Run %i failed." % run_number
+
                  stop_ots()  #stop otsdaq                 
             run_number = run_number + 1    
             #Writing scan file    
