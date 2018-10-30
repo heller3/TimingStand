@@ -6,6 +6,7 @@ import os
 import subprocess as sp
 import socket
 import sys
+import glob
 
 
 vmeRawDataDir = "/home/daq/Data/CMSTiming/"
@@ -25,7 +26,10 @@ def run_registry_exists(run_number):
     return os.path.exists(rawPath)
 
 def get_run_number():
-    run_number = max(max([int(x.split("/media/network/a/LABVIEW PROGRAMS AND TEXT FILES/time_")[1].split(".txt")[0]) for x in glob.glob("/media/network/a/LABVIEW PROGRAMS AND TEXT FILES/time_*")]), max([int(x.split("/home/daq/Data/RunRegistry/run")[1].split(".txt")[0]) for x in glob.glob("/home/daq/Data/RunRegistry/run*")]))
+
+    labview_max = max([int(x.split("/media/network/a/LABVIEW PROGRAMS AND TEXT FILES/time_")[1].split(".txt")[0]) for x in glob.glob("/media/network/a/LABVIEW PROGRAMS AND TEXT FILES/time_*")])
+    otsmax = max([int(x.split("/home/daq/Data/RunRegistry/run")[1].split(".txt")[0]) for x in glob.glob("/home/daq/Data/RunRegistry/run*")])
+    run_number = max(labview_max,otsmax)
     return run_number
 
 def write_runfile(a, run_number, scan_number, vors, board_sn, bias_volt, laser_amp, laser_fre, amp_volt, scan_in, scan_stepsize, beam_spotsize, temp):
@@ -105,10 +109,10 @@ def dattoroot(scan_number):
     vors = scan_lines[3]
     if vors == 'vme':
         isvme = 1
-        dattorootCmd = ". /home/daq/TimingDAQ/dattoroot.sh /home/daq/Data/CMSTiming/RawDataSaver0CMSVMETiming_Run%s_0_Raw.dat /home/daq/Data/CMSTiming/RawDataSaver0CMSVMETiming_Run%s_0_Raw.root", run_number, run_number);        
+        dattorootCmd = ". /home/daq/TimingDAQ/dattoroot.sh /home/daq/Data/CMSTiming/RawDataSaver0CMSVMETiming_Run%s_0_Raw.dat /home/daq/Data/CMSTiming/RawDataSaver0CMSVMETiming_Run%s_0_Raw.root" % ( run_number, run_number)        
     elif vors == 'scope':
         isvme = 0
-        dattorootCmd = ". /home/daq/TimingDAQ/dattorootscope.sh /home/daq/Data/NetScopeTiming/RawDataSaver0NetScope_Run%s_0_Raw.dat /home/daq/Data/NetScopeTiming/RawDataSaver0NetScope_Run%s_0_Raw.root", run_number, run_number);
+        dattorootCmd = ". /home/daq/TimingDAQ/dattorootscope.sh /home/daq/Data/NetScopeTiming/RawDataSaver0NetScope_Run%s_0_Raw.dat /home/daq/Data/NetScopeTiming/RawDataSaver0NetScope_Run%s_0_Raw.root" %(run_number, run_number)
     print 'Start run number: ', int(start_run_number)
     print 'Stop run number: ', int(stop_run_number)
     n_processed = 0

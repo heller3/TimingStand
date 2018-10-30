@@ -75,10 +75,11 @@ start_run_number = run_number
 if scan_in == 'x' or scan_in == 'y':
         print '############################STARTING POSITION SCAN###############################'
         wait_for_file("/media/network/a/LABVIEW PROGRAMS AND TEXT FILES/otsstatus.txt", 1,'Waiting for motor to get to initial position')    
+        motor_pos_init = motor_pos()
         i = 0 
         while i != 2:   
             print 'Motor moved to : ', motor_pos()
-            motor_pos_init = motor_pos()
+
             #time.sleep(10)
             print 'Run Number: ', run_number
             if(run_exists(run_number, vors)): 
@@ -154,10 +155,9 @@ print 'Stop run number: ', run_number - 1
 print 'Total runs taken: ',  run_number - start_run_number 
 
 for i in range(start_run_number, run_number):
-   if run_registry_exists(i):
-   else:
-      print 'No run file found for run number: ', i  
-      print 'Appending scan file to include this run number', append_scanfile(i, scan_number)
+    if not run_registry_exists(i):
+        print 'No run file found for run number: ', i  
+        print 'Appending scan file to include this run number', append_scanfile(i, scan_number)
 
 #DATTOROOT
 dattoroot(scan_number)
