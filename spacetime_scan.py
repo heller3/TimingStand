@@ -10,7 +10,7 @@ import glob
 from other_func import set_env
 from labview_tools import wait_for_file, motor_pos, run_num, scan_num
 from TCP_com import init_ots, config_ots, start_ots, stop_ots #in-built 5s delay in all of them
-from database_util import run_exists,write_runfile, write_scanfile, process_runs, analysis_plot, get_run_number, append_scanfile, dattoroot
+from database_util import run_registry_exists, run_exists,write_runfile, append_scanfile, write_scanfile, process_runs, analysis_plot, get_run_number, append_scanfile, dattoroot
 
 
  
@@ -157,7 +157,9 @@ print 'Total runs taken: ',  run_number - start_run_number
 for i in range(start_run_number, run_number):
     if not run_registry_exists(i):
         print 'No run file found for run number: ', i  
-        print 'Appending scan file to include this run number', append_scanfile(i, scan_number)
+    #else:
+        ################# REWRITE ####################
+     #   print 'Appending scan file to include this run number', append_scanfile(i, scan_number)
 
 #DATTOROOT
 dattoroot(scan_number)

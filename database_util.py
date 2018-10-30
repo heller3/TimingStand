@@ -12,6 +12,8 @@ import glob
 vmeRawDataDir = "/home/daq/Data/CMSTiming/"
 scopeRawDataDir = "/home/daq/Data/NetScopeTiming/"
 runRegistryDir = "/home/daq/Data/RunRegistry/"
+fillRegistryDir = "/home/daq/Data/FillRegistry/"
+labviewDirPath = "/media/network/a/LABVIEW PROGRAMS AND TEXT FILES/"
 
 def run_exists(run_number, vors):
     if vors == 'vme':
@@ -31,6 +33,49 @@ def get_run_number():
     otsmax = max([int(x.split("/home/daq/Data/RunRegistry/run")[1].split(".txt")[0]) for x in glob.glob("/home/daq/Data/RunRegistry/run*")])
     run_number = max(labview_max,otsmax)
     return run_number
+
+
+def get_next_run_number():
+    #Find next run number, without conflict with labview or waveform files
+    glob_arg = "%stime_*" %labviewDirPath
+    split_arg = "%stime_" %labviewDirPath
+    labview_max = max([int(x.split(split_arg)[1].split(".txt")[0]) for x in glob.glob(glob_arg)])
+
+    glob_arg = "%srun*" %runRegistryDir
+    split_arg = "%srun" %runRegistryDir
+    #print glob_arg
+    #print glob.glob(glob_arg)
+    otsmax = max([int(x.split(split_arg)[1].split(".txt")[0]) for x in glob.glob(glob_arg)])
+    next_run_number = max(labview_max,otsmax) + 1
+    return next_run_number
+
+
+def get_next_fill_num():
+    path = "%s/next_fill_number.txt" % fillRegistryDir
+    fill_number = open(path, "r")
+    fill = int(fill_number.read())
+    fill_number.close()
+    return fill
+
+def increment_fill_num():
+    fill_number = get_next_fill_num()
+    path = "%s/next_fill_number.txt" % fillRegistryDir
+    fillNumberLog = open(path, "w")
+    fillNumberLog.write(str(fill_number + 1))
+    fillNumberLog.close()
+    return
+
+def append_fillfile(fill_number,run_number):
+    fillFilePath = "%s/Fill%i.txt" % (fillRegistryDir,fill_number)
+    fillFile = open(fillFilePath,"a")
+    fillFile.write(str(run_number)+"\n")
+
+def write_short_runfile(fill_number,run_number):
+    runfile_handle = open("/home/daq/Data/RunRegistry/run%d.txt" % run_number, "w") 
+    runfile_handle.write(str(run_number)+ "\n")
+    runfile_handle.write(str(fill_number)+ "\n")
+    runfile_handle.close()
+
 
 def write_runfile(a, run_number, scan_number, vors, board_sn, bias_volt, laser_amp, laser_fre, amp_volt, scan_in, scan_stepsize, beam_spotsize, temp):
     runfile_handle = open("/home/daq/Data/RunRegistry/run%d.txt" % run_number, "a+") 
@@ -91,7 +136,7 @@ def process_runs(scan_number):
     print 'Stop run number: ', int(stop_run_number)
     n_processed = 0
     for i in range (int(start_run_number), int(stop_run_number) + 1):   
-        if run_exists(i) and run_registry_exists(i):       
+        if run_exists(i,vors) and run_registry_exists(i):       
             run_lines = [line.rstrip('\n') for line in open("/home/daq/Data/RunRegistry/run%d.txt"  % i)]
             motor_pos = run_lines[0]
             print 'Motor position: ', float(motor_pos)
@@ -107,17 +152,19 @@ def dattoroot(scan_number):
     start_run_number = scan_lines[0]
     stop_run_number = scan_lines[1]
     vors = scan_lines[3]
-    if vors == 'vme':
-        isvme = 1
-        dattorootCmd = ". /home/daq/TimingDAQ/dattoroot.sh /home/daq/Data/CMSTiming/RawDataSaver0CMSVMETiming_Run%s_0_Raw.dat /home/daq/Data/CMSTiming/RawDataSaver0CMSVMETiming_Run%s_0_Raw.root" % ( run_number, run_number)        
-    elif vors == 'scope':
-        isvme = 0
-        dattorootCmd = ". /home/daq/TimingDAQ/dattorootscope.sh /home/daq/Data/NetScopeTiming/RawDataSaver0NetScope_Run%s_0_Raw.dat /home/daq/Data/NetScopeTiming/RawDataSaver0NetScope_Run%s_0_Raw.root" %(run_number, run_number)
+
     print 'Start run number: ', int(start_run_number)
     print 'Stop run number: ', int(stop_run_number)
     n_processed = 0
     for i in range (int(start_run_number), int(stop_run_number) + 1):   
-        if run_exists(i) and run_registry_exists(i):       
+        if run_exists(i,vors) and run_registry_exists(i):
+            if vors == 'vme':
+                isvme = 1
+                dattorootCmd = ". /home/daq/TimingDAQ/dattoroot.sh /home/daq/Data/CMSTiming/RawDataSaver0CMSVMETiming_Run%i_0_Raw.dat /home/daq/Data/CMSTiming/RawDataSaver0CMSVMETiming_Run%i_0_Raw.root" % ( i, i)        
+            elif vors == 'scope':
+                isvme = 0
+                dattorootCmd = ". /home/daq/TimingDAQ/dattorootscope.sh /home/daq/Data/NetScopeTiming/RawDataSaver0NetScope_Run%i_0_Raw.dat /home/daq/Data/NetScopeTiming/RawDataSaver0NetScope_Run%i_0_Raw.root" %(i, i)       
+            
             os.system(dattorootCmd);
             n_processed = n_processed + 1
     print 'Converted %i out of expected %i runs attempted in scan.' % (n_processed , int(stop_run_number)-int(start_run_number)+1)

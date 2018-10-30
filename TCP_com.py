@@ -17,18 +17,18 @@ def config_ots():
     print "Configure: received message:", data
     time.sleep(5)
 
-def start_ots(run_number):
+def start_ots(run_number,Delay=True):
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     MESSAGE = "PhysicsRuns0,Start, %d" % (run_number) 
     sock.sendto(MESSAGE, ("192.168.133.10", 8000))
     data, addr = sock.recvfrom(1024) # buffer size is 1024 bytes
     print "Start: received message:", data
-    time.sleep(5)
+    if Delay: time.sleep(5)
 
-def stop_ots():
+def stop_ots(Delay=True):
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     MESSAGE = "PhysicsRuns0,Stop"
     sock.sendto(MESSAGE, ("192.168.133.10", 8000))
     data, addr = sock.recvfrom(1024) # buffer size is 1024 bytes
     print "Stop: received message:", data
-    time.sleep(5)
+    if Delay: time.sleep(5)

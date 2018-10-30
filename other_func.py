@@ -6,6 +6,17 @@ import os
 import subprocess as sp
 import socket
 import sys
+from datetime import datetime
+
+### wait for certain time (modulo 60 seconds)
+def wait_until(nseconds):
+    while True:
+        currentSeconds = datetime.now().time().second
+        if abs(currentSeconds - nseconds)>0:
+            time.sleep(0.1)
+        else:
+            break
+    return
 
 
 def set_env():
