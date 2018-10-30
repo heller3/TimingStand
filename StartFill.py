@@ -17,7 +17,7 @@ import database_util as db
 import other_func as of 
 
 
-debug = True
+debug = False
 
 ############# Important ##############
 ## This parameter defines at what time it is safe to start a new run
@@ -38,7 +38,9 @@ if not debug: set_env()
 print 'INTITIALIZING THE OTS-DAQ'
 if not debug: init_ots()
 print 'CONFIGURING THE OTS-DAQ'
-if not debug: config_ots()
+if not debug: 
+	config_ots()
+	time.sleep(40)
 
 ##Assign fill numbersca
 fill_number = db.get_next_fill_num() 
