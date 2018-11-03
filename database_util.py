@@ -183,3 +183,55 @@ def analysis_plot(scan_number):
     elif scan_in == 't':
         istime = 1
     os.system(''' root -l 'plot.c(%d,%d,%d)' ''' % (scan_number,isvme, istime))
+
+
+
+
+def processing_lab_meas(fill_number):
+    scan_lines = [line.rstrip('\n') for line in open("/home/daq/Data/ScanRegistry/scan%d.txt"  % scan_number)]
+    vors = scan_lines[3]
+    if vors == 'vme':
+        isvme = 1
+    elif vors == 'scope':
+        isvme = 0
+    scan_in = scan_lines[4]
+    if scan_in == 'x' or scan_in == 'y':
+        istime = 0 
+    elif scan_in == 't':
+        istime = 1
+    os.system(''' root -l 'plot.c(%d,%d,%d)' ''' % (scan_number,isvme, istime))
+
+def sync_labview_files(run_number):
+    #ots file 
+    ots_file_name = "/media/network/a/LABVIEW PROGRAMS AND TEXT FILES/timestamp%d.txt" % run_number
+    ots_time_list = loadtxt(ots_file_name, delimiter=' ', unpack=False).tolist()
+    otstime_lines = [line.rstrip('\n') for line in open(ots_file_name)]
+    ots_time_start = otstime_lines[0]
+    ots_time_stop = otstime_lines[len(otstime_lines) - 1]
+
+    #labview files
+    labview_file_list = [int(x.split("/media/network/a/LABVIEW PROGRAMS AND TEXT FILES/FNAL_Testbeam/lab_meas_raw_")[1].split(".txt")[0]) for x in glob.glob("/media/network/a/LABVIEW PROGRAMS AND TEXT FILES/FNAL_Testbeam/lab_meas_raw_*")]
+    exact_labview_file_start = min(labview_file_list, key=lambda x:abs(x-float(ots_time_start)))
+    exact_labview_file_stop = min(labview_file_list, key=lambda x:abs(x-float(ots_time_stop)))
+    index_labview_file_start = labview_file_list.index(int(exact_labview_file_start))
+    index_labview_file_stop = labview_file_list.index(int(exact_labview_file_stop))
+
+
+    for i in range(len(ots_time_list)):
+        #Current file
+        labview_file_name = "/media/network/a/LABVIEW PROGRAMS AND TEXT FILES/FNAL_Testbeam/lab_meas_raw_%d.txt" % exact_labview_file_start       
+        labview_array = loadtxt(labview_file_name, delimiter=' ', unpack=False)
+        labview_time_list = labview_array[:,0].tolist() 
+
+        current_labview_file_time = index_labview_file_start
+        next_labview_file_time = labview_file_list(index_labview_file_start + 1)
+        
+        if ots_time_list[i] < next_labview_file_time and ots_time_list[i] >= current_labview_file_time:
+            labview_time = min(labview_time_list, key=lambda x:abs(x-float(ots_time_list[i])))
+            index_labview_time = labview_time_list.index(float(labview_time))
+            synced_array[i,:] = labview_array[i,:]
+        else:
+            index_labview_file_start = index_labview_file_start + 1
+
+    np.savetxt('lab_meas_raw_%d.txt', synced_array, delimiter=' ') % run_number
+
