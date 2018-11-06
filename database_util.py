@@ -203,40 +203,6 @@ def processing_lab_meas(fill_number):
         istime = 1
     os.system(''' root -l 'plot.c(%d,%d,%d)' ''' % (scan_number,isvme, istime))
 
-def sync_labview_files(run_number):
-
-    #ots file 
-    timestamp_abs_path = "/home/daq/timestamp%d.txt" % run_number
-    ots_time_list = loadtxt(ots_file_name, delimiter=' ', unpack=False).tolist()
-    otstime_lines = [line.rstrip('\n') for line in open(ots_file_name)]
-    ots_time_start = otstime_lines[0]
-    ots_time_stop = otstime_lines[len(otstime_lines) - 1]
-
-    #labview files
-    labview_file_list = [float(x.split("/home/daq/lab_meas_unsync_")[1].split(".txt")[0]) for x in glob.glob("/home/daq/lab_meas_unsync_*")]
-    exact_labview_file_start = min(labview_file_list, key=lambda x:abs(x-float(ots_time_start)))
-    exact_labview_file_stop = min(labview_file_list, key=lambda x:abs(x-float(ots_time_stop)))
-    index_labview_file_start = labview_file_list.index(int(exact_labview_file_start))
-    index_labview_file_stop = labview_file_list.index(int(exact_labview_file_stop))
-
-
-    for i in range(len(ots_time_list)):
-        #Current file
-        labview_file_name = "/home/daq/lab_meas_unsync_%d.txt" % exact_labview_file_start       
-        labview_array = loadtxt(labview_file_name, delimiter=' ', unpack=False)
-        labview_time_list = labview_array[:,0].tolist() 
-
-        current_labview_file_time = index_labview_file_start
-        next_labview_file_time = labview_file_list(index_labview_file_start + 1)
-        
-        if ots_time_list[i] < next_labview_file_time and ots_time_list[i] >= current_labview_file_time:
-            labview_time = min(labview_time_list, key=lambda x:abs(x-float(ots_time_list[i])))
-            index_labview_time = labview_time_list.index(float(labview_time))
-            synced_array[i,:] = labview_array[i,:]
-        else:
-            index_labview_file_start = index_labview_file_start + 1
-
-    np.savetxt('lab_meas_unsync_%d.txt', synced_array, delimiter=' ') % run_number
 
 def new_sync_labview_files(lab_sync_abs_path, timestamp_abs_path, labview_unsync_base_path):
     
