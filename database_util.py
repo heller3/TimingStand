@@ -207,25 +207,16 @@ def processing_lab_meas(fill_number):
 
 
 def new_sync_labview_files(lab_sync_abs_path, timestamp_abs_path, labview_unsync_base_path):
-    
     #ots file 
     ots_time_list = np.loadtxt(timestamp_abs_path, delimiter=' ', unpack=False).tolist()
     otstime_lines = [line.rstrip('\n') for line in open(timestamp_abs_path)]
     ots_time_start = float(otstime_lines[0])
     ots_time_stop = float(otstime_lines[len(otstime_lines) - 1])
-    print ots_time_start
-    print ots_time_stop
 
     #labview files for start and stop
-    print glob.glob(labview_unsync_base_path + "/lab_meas_unsync_*")
-    print 
     labview_file_list = sorted([float(x.split("lab_meas_unsync_")[-1].split(".txt")[0]) for x in glob.glob(labview_unsync_base_path + "/lab_meas_unsync_*")])
-    print labview_file_list
-    print ots_time_start
     exact_labview_file_start = greatest_number_less_than_value(labview_file_list, ots_time_start)
     exact_labview_file_stop = greatest_number_less_than_value(labview_file_list, ots_time_stop)
-    print exact_labview_file_stop
-    print exact_labview_file_start
     index_labview_file_start = labview_file_list.index(exact_labview_file_start)
     index_labview_file_stop = labview_file_list.index(exact_labview_file_stop)
 
@@ -233,32 +224,28 @@ def new_sync_labview_files(lab_sync_abs_path, timestamp_abs_path, labview_unsync
     all_labview_array = np.array([])
     for i in range(index_labview_file_start, index_labview_file_stop + 1):
         labview_file_name = labview_unsync_base_path + "/lab_meas_unsync_%.3f.txt" % labview_file_list[i]
-        print labview_file_name
         labview_array = np.array(np.loadtxt(labview_file_name, delimiter='\t', unpack=False))
-        #print labview_array
-        if i==0:
-            all_labview_array=labview_array
-        else: all_labview_array = np.concatenate(all_labview_array, labview_array)
-
-    #print all_labview_array 
+        if i == index_labview_file_start:
+            all_labview_array = labview_array
+        else: 
+            all_labview_array = np.concatenate(all_labview_array, labview_array)
     all_labview_array_time_list = all_labview_array[:,0].tolist() 
 
     #Synchronizing both the files
     synced_array = np.array([])
     for i in range(len(ots_time_list)):
-        ###change to min abs
         labview_time = min(all_labview_array_time_list, key=lambda x:abs(x-float(ots_time_list[i])))
-        #labview_time = greatest_number_less_than_value(all_labview_array_time_list, ots_time_list[i])
-        index_labview_time = all_labview_array_time_list.index(float(labview_time))
-    
-        if i==0:
-            print all_labview_array[index_labview_time,:]
-            synced_array = all_labview_array[index_labview_time,:]
-
+        delta_time = labview_time - ots_time_list[i]
+        if abs(delta_time) > 100:
+            labview_warning = 1
         else:
-            print synced_array
-            synced_array = np.vstack((synced_array, all_labview_array[index_labview_time,:]))
-            #synced_array[i,:] = all_labview_array[index_labview_time,:]   
+            labview_warning = 0
+        index_labview_time = all_labview_array_time_list.index(float(labview_time))    
+        if i==0:
+            synced_array = np.append(all_labview_array[index_labview_time,:], [delta_time, labview_warning]) 
+        else:
+            synced_array = np.vstack((synced_array,np.append(all_labview_array[index_labview_time,:], [delta_time, labview_warning])))
     np.savetxt(lab_sync_abs_path, synced_array, delimiter=' ') 
+
 
 
