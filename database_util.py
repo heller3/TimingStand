@@ -7,7 +7,7 @@ import subprocess as sp
 import socket
 import sys
 import glob
-
+from bisect import bisect_left
 
 vmeRawDataDir = "/home/daq/Data/CMSTiming/"
 scopeRawDataDir = "/home/daq/Data/NetScopeTiming/"
@@ -22,13 +22,15 @@ def run_exists(run_number, vors):
         rawPath = "%s/RawDataSaver0NetScopeTiming_Run%i_0_Raw.dat" % (scopeRawDataDir, run_number)        
     return os.path.exists(rawPath)
 
+def greatest_number_less_than_value(seq,value):
+    return seq[bisect_left(seq,value)-1]
+
 def run_registry_exists(run_number):
     rawPath = "%s/run%i.txt" % (runRegistryDir, run_number)
     print rawPath
     return os.path.exists(rawPath)
 
 def get_run_number():
-
     labview_max = max([int(x.split("/media/network/a/LABVIEW PROGRAMS AND TEXT FILES/time_")[1].split(".txt")[0]) for x in glob.glob("/media/network/a/LABVIEW PROGRAMS AND TEXT FILES/time_*")])
     otsmax = max([int(x.split("/home/daq/Data/RunRegistry/run")[1].split(".txt")[0]) for x in glob.glob("/home/daq/Data/RunRegistry/run*")])
     run_number = max(labview_max,otsmax)
@@ -183,3 +185,98 @@ def analysis_plot(scan_number):
     elif scan_in == 't':
         istime = 1
     os.system(''' root -l 'plot.c(%d,%d,%d)' ''' % (scan_number,isvme, istime))
+
+
+
+
+def processing_lab_meas(fill_number):
+    scan_lines = [line.rstrip('\n') for line in open("/home/daq/Data/ScanRegistry/scan%d.txt"  % scan_number)]
+    vors = scan_lines[3]
+    if vors == 'vme':
+        isvme = 1
+    elif vors == 'scope':
+        isvme = 0
+    scan_in = scan_lines[4]
+    if scan_in == 'x' or scan_in == 'y':
+        istime = 0 
+    elif scan_in == 't':
+        istime = 1
+    os.system(''' root -l 'plot.c(%d,%d,%d)' ''' % (scan_number,isvme, istime))
+
+def sync_labview_files(run_number):
+
+    #ots file 
+    timestamp_abs_path = "/home/daq/timestamp%d.txt" % run_number
+    ots_time_list = loadtxt(ots_file_name, delimiter=' ', unpack=False).tolist()
+    otstime_lines = [line.rstrip('\n') for line in open(ots_file_name)]
+    ots_time_start = otstime_lines[0]
+    ots_time_stop = otstime_lines[len(otstime_lines) - 1]
+
+    #labview files
+    labview_file_list = [float(x.split("/home/daq/lab_meas_unsync_")[1].split(".txt")[0]) for x in glob.glob("/home/daq/lab_meas_unsync_*")]
+    exact_labview_file_start = min(labview_file_list, key=lambda x:abs(x-float(ots_time_start)))
+    exact_labview_file_stop = min(labview_file_list, key=lambda x:abs(x-float(ots_time_stop)))
+    index_labview_file_start = labview_file_list.index(int(exact_labview_file_start))
+    index_labview_file_stop = labview_file_list.index(int(exact_labview_file_stop))
+
+
+    for i in range(len(ots_time_list)):
+        #Current file
+        labview_file_name = "/home/daq/lab_meas_unsync_%d.txt" % exact_labview_file_start       
+        labview_array = loadtxt(labview_file_name, delimiter=' ', unpack=False)
+        labview_time_list = labview_array[:,0].tolist() 
+
+        current_labview_file_time = index_labview_file_start
+        next_labview_file_time = labview_file_list(index_labview_file_start + 1)
+        
+        if ots_time_list[i] < next_labview_file_time and ots_time_list[i] >= current_labview_file_time:
+            labview_time = min(labview_time_list, key=lambda x:abs(x-float(ots_time_list[i])))
+            index_labview_time = labview_time_list.index(float(labview_time))
+            synced_array[i,:] = labview_array[i,:]
+        else:
+            index_labview_file_start = index_labview_file_start + 1
+
+    np.savetxt('lab_meas_unsync_%d.txt', synced_array, delimiter=' ') % run_number
+
+def new_sync_labview_files(lab_sync_abs_path, timestamp_abs_path, labview_unsync_base_path):
+    
+    #ots file 
+    ots_time_list = np.loadtxt(timestamp_abs_path, delimiter=' ', unpack=False).tolist()
+    otstime_lines = [line.rstrip('\n') for line in open(timestamp_abs_path)]
+    ots_time_start = float(otstime_lines[0])
+    ots_time_stop = float(otstime_lines[len(otstime_lines) - 1])
+    print ots_time_start
+    print ots_time_stop
+
+    #labview files for start and stop
+    labview_file_list = sorted([float(x.split(labview_unsync_base_path + "/lab_meas_unsync_")[1].split(".txt")[0]) for x in glob.glob(labview_unsync_base_path + "/lab_meas_unsync_*")])
+    print labview_file_list
+    print ots_time_start
+    exact_labview_file_start = greatest_number_less_than_value(labview_file_list, ots_time_start)
+    exact_labview_file_stop = greatest_number_less_than_value(labview_file_list, ots_time_stop)
+    print exact_labview_file_stop
+    print exact_labview_file_start
+    index_labview_file_start = labview_file_list.index(exact_labview_file_start)
+    index_labview_file_stop = labview_file_list.index(exact_labview_file_stop)
+
+    #Result array from all labview files between start and stop
+    all_labview_array = np.array([])
+    for i in range(index_labview_file_start, index_labview_file_stop + 1):
+        labview_file_name = labview_unsync_base_path + "/lab_meas_unsync_%.3f.txt" % labview_file_list[i]
+        labview_array = np.loadtxt(labview_file_name, delimiter=' ', unpack=False)
+        all_labview_array = np.append(all_labview_array, labview_array)
+
+    print all_labview_array 
+    all_labview_array_time_list = all_labview_array[:,0].tolist() 
+
+    #Synchronizing both the files
+    synced_array = np.array([])
+    for i in range(len(ots_time_list)):
+        ###change to min abs
+        labview_time = min(all_labview_array_time_list, key=lambda x:abs(x-float(ots_time_list[i])))
+        #labview_time = greatest_number_less_than_value(all_labview_array_time_list, ots_time_list[i])
+        index_labview_time = all_labview_array_time_list.index(float(labview_time))
+        synced_array[i,:] = all_labview_array[index_labview_time,:]   
+    np.savetxt(lab_sync_abs_path, synced_array, delimiter=' ') 
+
+

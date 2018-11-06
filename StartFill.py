@@ -18,6 +18,7 @@ import other_func as of
 
 
 debug = False
+pixel = False
 
 ############# Important ##############
 ## This parameter defines at what time it is safe to start a new run
@@ -26,7 +27,7 @@ debug = False
 ## Periodically make sure this value makes sense.
 start_seconds = 30
 
-stop_seconds = 10
+stop_seconds = 20
 
 ### number of spills per run (approx number of minutes per run)
 n_spills_per_run = 1
@@ -42,7 +43,7 @@ if not debug:
 	config_ots()
 	time.sleep(40)
 
-##Assign fill numbersca
+##Assign fill number
 fill_number = db.get_next_fill_num() 
 db.increment_fill_num() # for next time
 
@@ -54,6 +55,7 @@ run_number = db.get_next_run_number()
 while True:
 	#### wait for safe time to start run ###
 	of.wait_until(start_seconds)
+	
 	## start run
 	print "Starting run %i at %s" % (run_number, datetime.now().time())
 	if not debug: start_ots(run_number,False)
@@ -62,6 +64,12 @@ while True:
 	db.write_short_runfile(fill_number,run_number)
 	db.append_fillfile(fill_number,run_number)
 
+	#Starting pixel tracker
+	if pixel: os.system('source /home/daq/pixel.sh start')
+
+	#Sending run number to pixel tracker
+	if pixel: os.system('source /home/daq/pixel.sh send_run_number %d' % (run_number))
+
 	### sleep for number of complete minutes per run
 	time.sleep(60*(n_spills_per_run-1))
 
@@ -69,6 +77,9 @@ while True:
 	of.wait_until(stop_seconds)
 	print "Stopping run %i at %s" % (run_number, datetime.now().time())
 	if not debug: stop_ots(False)
+
+	#Stopping pixel tracker
+	if pixel: os.system('source /home/daq/stop_pixel.sh stop')
 
 	run_number = run_number+1 
 
