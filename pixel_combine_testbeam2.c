@@ -40,15 +40,11 @@ void pixel_combine_testbeam2(TString root_filename, TString pixel_filename)
     	one_row.push_back(y_pix);
     	one_row.push_back(no_of_hits);
     	pixel_table.push_back(one_row);
-
-    	total_pixel_rows++;
-	cout<<" read row "<<total_pixel_rows<<endl;
     }
 
    	bool finished_event=false;
    	int pixel_events=0;
     for(int i=0;i<(int)pixel_table.size();i++ ){
-      cout<<" reading row again "<<i<<endl;
       if(!(pixel_table[i][1]==16&&pixel_table[i][2]==0&&pixel_table[i][3])){
     	x_pixel->push_back(pixel_table[i][1]);
     	y_pixel->push_back(pixel_table[i][2]);
@@ -56,8 +52,6 @@ void pixel_combine_testbeam2(TString root_filename, TString pixel_filename)
       }
     	if(i==pixel_table.size()-1 || pixel_table[i][0] != pixel_table[i+1][0]){
     		finished_event=true;
-		cout<<" finished event"<<endl;
-
 		if(x_pixel->size()==0){
 		  x_pixel->push_back(-1);
 		  y_pixel->push_back(-1);
@@ -66,8 +60,7 @@ void pixel_combine_testbeam2(TString root_filename, TString pixel_filename)
     	} //this is last row of this event
 
     	if(finished_event){
-	  cout<<"filling"<<endl;
-	    	b_x_pixel->Fill();
+	            b_x_pixel->Fill();
 		    b_y_pixel->Fill();
 		    b_no_of_hits_pixel->Fill();
 		    finished_event=false;
