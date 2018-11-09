@@ -242,9 +242,9 @@ def new_sync_labview_files(lab_sync_abs_path, timestamp_abs_path, labview_unsync
             labview_warning = 0
         index_labview_time = all_labview_array_time_list.index(float(labview_time))    
         if i==0:
-            synced_array = np.append(all_labview_array[index_labview_time,:], [delta_time, labview_warning]) 
+            synced_array = np.append(all_labview_array[index_labview_time,:], [labview_warning, delta_time]) 
         else:
-            synced_array = np.vstack((synced_array,np.append(all_labview_array[index_labview_time,:], [delta_time, labview_warning])))
+            synced_array = np.vstack((synced_array,np.append(all_labview_array[index_labview_time,:], [labview_warning, delta_time])))
     np.savetxt(lab_sync_abs_path, synced_array, delimiter=' ') 
 
 
