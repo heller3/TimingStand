@@ -226,9 +226,9 @@ def new_sync_labview_files(lab_sync_abs_path, timestamp_abs_path, labview_unsync
         labview_file_name = labview_unsync_base_path + "/lab_meas_unsync_%.3f.txt" % labview_file_list[i]
         labview_array = np.array(np.loadtxt(labview_file_name, delimiter='\t', unpack=False))
         if i == index_labview_file_start:
-            all_labview_array = labview_array
+            all_labview_array = labview_array            
         else: 
-            all_labview_array = np.concatenate(all_labview_array, labview_array)
+            all_labview_array = np.concatenate((all_labview_array, labview_array), axis=0)
     all_labview_array_time_list = all_labview_array[:,0].tolist() 
 
     #Synchronizing both the files
