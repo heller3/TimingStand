@@ -208,6 +208,7 @@ def processing_lab_meas(fill_number):
 
 def new_sync_labview_files(lab_sync_abs_path, timestamp_abs_path, labview_unsync_base_path):
     #ots file 
+    bool = True
     ots_time_list = np.loadtxt(timestamp_abs_path, delimiter=' ', unpack=False).tolist()
     if len(ots_time_list) != 0:        
         otstime_lines = [line.rstrip('\n') for line in open(timestamp_abs_path)]
@@ -234,22 +235,24 @@ def new_sync_labview_files(lab_sync_abs_path, timestamp_abs_path, labview_unsync
                 all_labview_array_time_list = all_labview_array[0]
             else:
                 all_labview_array_time_list = all_labview_array[:,0].tolist()
-        
+ 
         #Synchronizing both the files
         synced_array = np.array([])
         for i in range(len(ots_time_list)):
+            print i
             if (not isinstance(all_labview_array_time_list,list)):
                 labview_time = all_labview_array_time_list
                 delta_time = labview_time - ots_time_list[i]
                 if abs(delta_time) > 100:
                     labview_warning = 1
                     print 'The difference in timestamps is greater than 100s, probably the instruments were off!!!!!'
-                    return False
+                    bool = False
+                    return bool
                     break
                 else:
                     labview_warning = 0
                     if i==0:        
-                        synced_array = np.append(all_labview_array, [labview_warning, delta_time]) 
+                        synced_array = np.append(all_labview_array, [labview_warning, delta_time])
                     else:
                         synced_array = np.vstack((synced_array,np.append(all_labview_array, [labview_warning, delta_time])))
             else:        
@@ -257,15 +260,20 @@ def new_sync_labview_files(lab_sync_abs_path, timestamp_abs_path, labview_unsync
                 delta_time = labview_time - ots_time_list[i]
                 if abs(delta_time) > 100:
                     labview_warning = 1
+                    print 'The difference in timestamps is greater than 100s, probably the instruments were off!!!!!'
+                    bool = False
+                    return bool
+                    break
                 else:
                     labview_warning = 0
                     index_labview_time = all_labview_array_time_list.index(float(labview_time))    
                     if i==0:
-                        synced_array = np.append(all_labview_array[index_labview_time,:], [labview_warning, delta_time]) 
+                        synced_array = np.append(all_labview_array[index_labview_time,:], [labview_warning, delta_time])  
                     else:
                         synced_array = np.vstack((synced_array,np.append(all_labview_array[index_labview_time,:], [labview_warning, delta_time])))
-        np.savetxt(lab_sync_abs_path, synced_array, delimiter=' ') 
+        np.savetxt(lab_sync_abs_path, synced_array, delimiter=' ')         
     else:
         print 'Timestamp file is empty'
-        return False
+        bool = False
+    return bool
 
