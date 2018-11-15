@@ -5,6 +5,7 @@ using namespace std;
 void pixel_combine_testbeam2(TString root_filename, TString pixel_filename)
 {
 	//Opening file
+        TH2F *h2 = new TH2F("h2","",500,0,125,500,0,300);                                                
 	TFile f1(root_filename, "UPDATE");
 	TTree *pulse = (TTree*)f1.Get("pulse");
 	int tree_entries = pulse->GetEntries();
@@ -42,23 +43,30 @@ void pixel_combine_testbeam2(TString root_filename, TString pixel_filename)
     	pixel_table.push_back(one_row);
     }
 
-   	bool finished_event=false;
-   	int pixel_events=0;
+    TCanvas *c1 = new TCanvas("c1", "c1",900,900);                                                      
+    gStyle->SetOptStat(0);                                                                              
+                                                                                                         
+    // Create the three pads                                                                             
+    TPad *center_pad = new TPad("center_pad", "center_pad",0.0,0.0,0.6,0.6);                             
+    bool finished_event=false;
+    int pixel_events=0;
+       
+
     for(int i=0;i<(int)pixel_table.size();i++ ){
-      if(!(pixel_table[i][1]==16&&pixel_table[i][2]==0&&pixel_table[i][3])){
+        if(!(pixel_table[i][1]==16&&pixel_table[i][2]==0&&pixel_table[i][3]==0)){
     	x_pixel->push_back(pixel_table[i][1]);
     	y_pixel->push_back(pixel_table[i][2]);
     	no_of_hits_pixel->push_back(pixel_table[i][3]);
-      }
-    	if(i==pixel_table.size()-1 || pixel_table[i][0] != pixel_table[i+1][0]){
-    		finished_event=true;
+	}
+    	if(i==pixel_table.size()-1 || pixel_table[i][0] != pixel_table[i+1][0]){	        
+   		finished_event=true;
 		if(x_pixel->size()==0){
 		  x_pixel->push_back(-1);
 		  y_pixel->push_back(-1);
 		  no_of_hits_pixel->push_back(0);
 		}
     	} //this is last row of this event
-
+	
     	if(finished_event){
 	            b_x_pixel->Fill();
 		    b_y_pixel->Fill();
@@ -69,9 +77,14 @@ void pixel_combine_testbeam2(TString root_filename, TString pixel_filename)
 		    no_of_hits_pixel->clear();
 		    pixel_events++;
     	}
+	h2->Fill(pixel_table[i][1],pixel_table[i][2]);
     }	
-	std::cout << "Entries in the tree: " << tree_entries << endl; 
+	// Drawing
+	gStyle->SetPalette(1);
+	h2->DrawCopy("COL");
+	
+        std::cout << "Entries in the tree: " << tree_entries << endl; 
 	std::cout << "Rows in the pixel file: " << pixel_events << endl; 
 	pulse->Write();
-    f1.Close();
-}
+	f1.Close();
+}                                                                                                        
